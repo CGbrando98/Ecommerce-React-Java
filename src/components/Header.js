@@ -1,10 +1,23 @@
 import React from 'react'
 import { LinkContainer } from 'react-router-bootstrap'
-import { Navbar, Nav, Container } from 'react-bootstrap'
-
+import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap'
+import { useDispatch, useSelector } from 'react-redux'
+import {
+  logoutUser,
+  selectUserAuth,
+  selectUserAuthStatus,
+  selectUserAuthError,
+} from '../redux/userAuthSlice'
 // we use a link container here since we need to wrap bootstrap components
 // use Link from react-router-dom for replacing a tags
 const Header = () => {
+  const dispatch = useDispatch()
+  const user = useSelector(selectUserAuth)
+  const { userInfo } = user
+
+  const logoutHandler = () => {
+    dispatch(logoutUser())
+  }
   return (
     <header>
       <Navbar
@@ -32,12 +45,26 @@ const Header = () => {
                 </Nav.Link>
               </LinkContainer>
 
-              <LinkContainer to='/login'>
-                <Nav.Link>
-                  <i className='fas fa-user me-2'></i>
-                  Sign In
-                </Nav.Link>
-              </LinkContainer>
+              {userInfo ? (
+                <NavDropdown
+                  title={userInfo.username}
+                  id='username'
+                >
+                  <LinkContainer to='/profile'>
+                    <NavDropdown.Item>Profile</NavDropdown.Item>
+                  </LinkContainer>
+                  <NavDropdown.Item onClick={logoutHandler}>
+                    Logout
+                  </NavDropdown.Item>
+                </NavDropdown>
+              ) : (
+                <LinkContainer to='/login'>
+                  <Nav.Link>
+                    <i className='fas fa-user me-2'></i>
+                    Sign In
+                  </Nav.Link>
+                </LinkContainer>
+              )}
             </Nav>
           </Navbar.Collapse>
         </Container>

@@ -1,8 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios'
 
-const URL = 'http://localhost:8080/api/products'
-
 // intial state before an actions are dispatched
 const initialState = {
   products: [],
@@ -14,9 +12,8 @@ const initialState = {
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
   async () => {
-    const res = await axios.get(URL)
+    const res = await axios.get('http://localhost:8080/api/products')
     // throw new Error('Error testing')
-    console.log(res.data)
     return [...res.data]
   }
 )
@@ -26,6 +23,8 @@ const productsSlice = createSlice({
   name: 'products',
   initialState,
   reducers: {},
+  // the api call is made and redux thunk knows to place the state as pending,
+  //then either the call is successfull or rejected and one of the other cases is fired
   extraReducers: (builder) => {
     builder
       .addCase(fetchProducts.pending, (state, action) => {
@@ -46,4 +45,4 @@ export const selectProducts = (state) => state.products.products
 export const selectProductsStatus = (state) => state.products.status
 export const selectProductsError = (state) => state.products.error
 
-export default productsSlice.reducer
+export const productsReducer = productsSlice.reducer

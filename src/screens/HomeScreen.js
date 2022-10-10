@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Row, Col } from 'react-bootstrap'
 import Loader from '../components/Loader'
@@ -21,17 +21,14 @@ const HomeScreen = () => {
   const productsError = useSelector(selectProductsError)
 
   useEffect(() => {
-    if (productsStatus === 'idle') {
-      dispatch(fetchProducts())
-    }
+    dispatch(fetchProducts())
     // const fetchProducts = async () => {
     //   const res = await axios.get('http://localhost:8080/api/products')
     //   setProducts(res.data)
     // }
     // fetchProducts()
-  }, [])
-
-  console.log(products)
+    // eslint-disable-next-line
+  }, [dispatch])
   return (
     <>
       <h1>Latest Products</h1>
@@ -40,7 +37,7 @@ const HomeScreen = () => {
       ) : productsError ? (
         <Message variant='danger'>{productsError}</Message>
       ) : (
-        // display products if no erro is found and not loading
+        // display products if no error is found and not loading
         <Row>
           {products.map((product) => (
             <Col

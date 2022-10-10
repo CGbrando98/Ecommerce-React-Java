@@ -1,8 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios'
 
-const URL = `http://localhost:8080/api/products/${id}`
-
 // intial state before an actions are dispatched
 const initialState = {
   product: {},
@@ -13,8 +11,8 @@ const initialState = {
 // api call
 export const fetchProduct = createAsyncThunk(
   'product/fetchProduct',
-  async () => {
-    const res = await axios.get(URL)
+  async (id) => {
+    const res = await axios.get(`http://localhost:8080/api/products/${id}`)
     // throw new Error('Error testing')
     return { ...res.data }
   }
@@ -45,4 +43,4 @@ export const selectProduct = (state) => state.product.product
 export const selectProductStatus = (state) => state.product.status
 export const selectProductError = (state) => state.product.error
 
-export default productSlice.reducer
+export const productReducer = productSlice.reducer
