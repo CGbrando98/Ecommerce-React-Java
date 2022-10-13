@@ -28,10 +28,11 @@ export const getOrderPlacedById = createAsyncThunk(
 )
 
 // api call to pay for order
-export const payOrder = createAsyncThunk(
-  'orderPlaced/payForOrder',
+export const payOrderPlaced = createAsyncThunk(
+  'orderPlaced/payOrderPlaced',
   async (input) => {
-    const { token, orderId } = input
+    const { token, orderId, paymentResult } = input
+    // console.log(paymentResult)
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -40,7 +41,12 @@ export const payOrder = createAsyncThunk(
     }
     const res = await axios.put(
       `http://localhost:8080/api/orders/${orderId}/pay`,
-
+      {
+        id_paymentpaypal: paymentResult.id,
+        paymentstatus: paymentResult.status,
+        paymentupdatetime: paymentResult.update_time,
+        paymentemail: paymentResult.payer.email_address,
+      },
       config
     )
 
@@ -59,7 +65,7 @@ const orderPlacedSlice = createSlice({
         state.status = 'loading'
       })
       .addCase(getOrderPlacedById.fulfilled, (state, action) => {
-        state.status = 'succeeded'
+        state.status = 'order fetched'
         state.orderPlaced = action.payload
       })
       .addCase(getOrderPlacedById.rejected, (state, action) => {
@@ -68,14 +74,14 @@ const orderPlacedSlice = createSlice({
       })
 
     builder
-      .addCase(payOrder.pending, (state, action) => {
+      .addCase(payOrderPlaced.pending, (state, action) => {
         state.status = 'loading'
       })
-      .addCase(payOrder.fulfilled, (state, action) => {
-        state.status = 'succeeded'
+      .addCase(payOrderPlaced.fulfilled, (state, action) => {
+        state.status = 'order paid'
         state.orderPlaced = action.payload
       })
-      .addCase(payOrder.rejected, (state, action) => {
+      .addCase(payOrderPlaced.rejected, (state, action) => {
         state.status = 'failed'
         state.error = action.error.message
       })

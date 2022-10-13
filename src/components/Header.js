@@ -8,6 +8,7 @@ import {
   selectUserAuthStatus,
   selectUserAuthError,
 } from '../redux/userAuthSlice'
+import { resetUsers } from '../redux/usersSlice'
 // we use a link container here since we need to wrap bootstrap components
 // use Link from react-router-dom for replacing a tags
 const Header = () => {
@@ -17,6 +18,7 @@ const Header = () => {
 
   const logoutHandler = () => {
     dispatch(logoutUser())
+    dispatch(resetUsers())
   }
   return (
     <header>
@@ -64,6 +66,22 @@ const Header = () => {
                     Sign In
                   </Nav.Link>
                 </LinkContainer>
+              )}
+              {userInfo && userInfo.role === 'ROLE_ADMIN' && (
+                <NavDropdown
+                  title='Admin'
+                  id='adminmenu'
+                >
+                  <LinkContainer to='/admin/users'>
+                    <NavDropdown.Item>Users</NavDropdown.Item>
+                  </LinkContainer>
+                  <LinkContainer to='/admin/products'>
+                    <NavDropdown.Item>Products</NavDropdown.Item>
+                  </LinkContainer>
+                  <LinkContainer to='/admin/orders'>
+                    <NavDropdown.Item>Orders</NavDropdown.Item>
+                  </LinkContainer>
+                </NavDropdown>
               )}
             </Nav>
           </Navbar.Collapse>

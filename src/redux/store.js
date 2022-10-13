@@ -5,6 +5,9 @@ import { orderReducer } from './orderSlice'
 import { userAuthReducer } from './userAuthSlice'
 import { userRegisterReducer } from './userRegisterSlice'
 import { orderPlacedReducer } from './orderPlacedSlice'
+import { ordersPlacedReducer } from './ordersPlacedSlice'
+import { usersReducer } from './usersSlice'
+import { userReducer } from './userSlice'
 
 export const store = configureStore({
   reducer: {
@@ -12,7 +15,10 @@ export const store = configureStore({
     product: productReducer,
     order: orderReducer,
     orderPlaced: orderPlacedReducer,
+    ordersPlaced: ordersPlacedReducer,
+    user: userReducer,
     userAuth: userAuthReducer,
     userRegister: userRegisterReducer,
+    users: usersReducer,
   },
 })

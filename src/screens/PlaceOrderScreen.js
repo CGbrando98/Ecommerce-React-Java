@@ -5,12 +5,13 @@ import { useNavigate, Link } from 'react-router-dom'
 import Message from '../components/Message'
 import CheckoutSteps from '../components/CheckoutSteps'
 import {
+  selectOrderStatus,
   selectOrder,
   selectCart,
   selectShippingDetails,
   selectPaymentMethod,
-  createOrder,
-  sendOrder,
+  CreateAndSendOrder,
+  resetOrder,
 } from '../redux/orderSlice'
 import { selectUserAuth } from '../redux/userAuthSlice'
 
@@ -23,6 +24,7 @@ const PlaceOrderScreen = () => {
   const token = user.access_token
 
   const order = useSelector(selectOrder)
+  const orderStatus = useSelector(selectOrderStatus)
   const orderId = order ? order.id_order : null
   const cart = useSelector(selectCart)
   const shippingAddress = useSelector(selectShippingDetails)
@@ -43,13 +45,24 @@ const PlaceOrderScreen = () => {
     if (!userId) {
       navigate(`/login?redirect=order/${orderId}`)
     }
-  }, [navigate, paymentMethod, user])
+    if (orderStatus === 'order sent successfully') {
+      navigate(`/orders/${orderId}`)
+      dispatch(resetOrder())
+    }
+  }, [navigate, paymentMethod, user, orderStatus])
 
   const placeOrderHandler = () => {
-    dispatch(createOrder({ totalPrice, shippingPrice, taxPrice, itemsPrice }))
-    dispatch(sendOrder({ order, token, userId }))
-    // this doesnt work, its fired before dom reload
-    navigate(`/orders/${orderId}`)
+    dispatch(
+      CreateAndSendOrder({
+        order,
+        token,
+        userId,
+        totalPrice,
+        shippingPrice,
+        taxPrice,
+        itemsPrice,
+      })
+    )
   }
   return (
     <>

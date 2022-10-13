@@ -6,6 +6,7 @@ import { PayPalButton } from 'react-paypal-button-v2'
 import Message from '../components/Message'
 import Loader from '../components/Loader'
 import {
+  payOrderPlaced,
   getOrderPlacedById,
   selectOrderPlaced,
   selectOrderPlacedStatus,
@@ -23,6 +24,7 @@ const OrderScreen = () => {
   const navigate = useNavigate()
 
   const user = useSelector(selectUserAuth)
+  const userId = user.userInfo ? user.userInfo.id_user : null
   const token = user.access_token
 
   const orderPlaced = useSelector(selectOrderPlaced)
@@ -37,6 +39,10 @@ const OrderScreen = () => {
   const orderPlacedError = useSelector(selectOrderPlacedError)
 
   useEffect(() => {
+    if (!userId) {
+      navigate(`/login?redirect=orders/${orderId}`)
+    }
+
     const addPaypalScript = async () => {
       const { data } = await axios.get(
         'http://localhost:8080/api/config/paypal'
@@ -49,15 +55,14 @@ const OrderScreen = () => {
       document.body.appendChild(script)
     }
     dispatch(getOrderPlacedById({ token, orderId }))
+
     if (!orderPlaced.ispaid) {
       addPaypalScript()
-    } else {
-      setSdkReady(true)
     }
-  }, [dispatch, token, orderId])
+  }, [dispatch, token, orderId, sdkReady])
 
-  const successPaymentHandler = () => {
-    console.log('paid')
+  const successPaymentHandler = (paymentResult) => {
+    dispatch(payOrderPlaced({ orderId, token, paymentResult }))
   }
 
   return (

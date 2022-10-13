@@ -37,7 +37,6 @@ export const addToCart = createAsyncThunk('cart/addToCart', async (input) => {
   const { productId, productQty } = input
   const res = await axios.get(`http://localhost:8080/api/products/${productId}`)
   const { data } = res
-  console.log(data)
   // throw new Error('Error testing')
   return {
     product: data.id_product,
@@ -50,39 +49,51 @@ export const addToCart = createAsyncThunk('cart/addToCart', async (input) => {
 })
 
 // api call to send order
-export const sendOrder = createAsyncThunk('order/sendOrder', async (input) => {
-  const { token, order, userId } = input
+export const CreateAndSendOrder = createAsyncThunk(
+  'order/sendOrder',
+  async (input) => {
+    const {
+      token,
+      order,
+      userId,
+      totalPrice,
+      shippingPrice,
+      taxPrice,
+      itemsPrice,
+    } = input
 
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  }
-  const res = await axios.post(
-    `http://localhost:8080/api/orders`,
-    {
-      userid: userId,
-      items: order.cart,
-      shipping: {
-        ...order.shippingDetails,
-        postal: order.shippingDetails.postalCode,
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
-      payment: { ...order.paymentDetails },
-      paymentmethod: order.paymentMethod,
-      itemsprice: order.itemsPrice,
-      taxprice: order.taxPrice,
-      shippingprice: order.shippingPrice,
-      totalprice: order.totalPrice,
-      ispaid: order.isPaid,
-      paidat: order.paidAt,
-      isdelivered: order.isDelivered,
-      deliveredat: order.deliveredAt,
-    },
-    config
-  )
-  return { ...res.data }
-})
+    }
+    const res = await axios.post(
+      `http://localhost:8080/api/orders`,
+      {
+        // the user is already in the DB while the other nested objects aren't
+        userid: userId,
+        items: order.cart,
+        shipping: {
+          ...order.shippingDetails,
+          postal: order.shippingDetails.postalCode,
+        },
+        payment: { ...order.paymentDetails },
+        paymentmethod: order.paymentMethod,
+        itemsprice: itemsPrice,
+        taxprice: taxPrice,
+        shippingprice: shippingPrice,
+        totalprice: totalPrice,
+        ispaid: order.isPaid,
+        paidat: order.paidAt,
+        isdelivered: order.isDelivered,
+        deliveredat: order.deliveredAt,
+      },
+      config
+    )
+    return { ...res.data }
+  }
+)
 
 const orderSlice = createSlice({
   name: 'order',
@@ -112,8 +123,6 @@ const orderSlice = createSlice({
       return returnedState
     },
 
-    addPaymentDetails: (state, action) => {},
-
     addPaymentMethod: (state, action) => {
       const returnedState = {
         ...state,
@@ -123,13 +132,16 @@ const orderSlice = createSlice({
       return returnedState
     },
 
-    createOrder: (state, action) => {
+    resetOrder: (state, action) => {
       const returnedState = {
         ...state,
-        taxPrice: action.payload.taxPrice,
-        shippingPrice: action.payload.shippingPrice,
-        totalPrice: action.payload.totalPrice,
-        itemsPrice: action.payload.itemsPrice,
+        status: 'idle',
+        id_order: null,
+        cart: [],
+        itemsPrice: null,
+        taxPrice: null,
+        shippingPrice: null,
+        totalPrice: null,
       }
       localStorage.setItem('order', JSON.stringify(returnedState))
       return returnedState
@@ -168,21 +180,25 @@ const orderSlice = createSlice({
       })
 
     builder
-      .addCase(sendOrder.pending, (state, action) => {
+      .addCase(CreateAndSendOrder.pending, (state, action) => {
         state.status = 'loading'
       })
-      .addCase(sendOrder.fulfilled, (state, action) => {
+      .addCase(CreateAndSendOrder.fulfilled, (state, action) => {
         const returnedState = {
           ...state,
           status: 'order sent successfully',
           error: null,
           id_order: action.payload.id_order,
+          taxPrice: action.payload.taxprice,
+          shippingPrice: action.payload.shippingprice,
+          totalPrice: action.payload.totalprice,
+          itemsPrice: action.payload.itemsprice,
         }
         localStorage.setItem('order', JSON.stringify(returnedState))
-        console.log(action.payload)
+
         return returnedState
       })
-      .addCase(sendOrder.rejected, (state, action) => {
+      .addCase(CreateAndSendOrder.rejected, (state, action) => {
         state.status = 'order rejected'
         state.error = action.error.message
       })
@@ -191,17 +207,15 @@ const orderSlice = createSlice({
 
 // maybe this state should be called order
 export const selectOrder = (state) => state.order
+export const selectOrderStatus = (state) => state.order.status
 export const selectCart = (state) => state.order.cart
 export const selectShippingDetails = (state) => state.order.shippingDetails
-// object
-export const selectPaymentDetails = (state) => state.order.paymentDetails
-// string
 export const selectPaymentMethod = (state) => state.order.paymentMethod
 export const {
   removeFromCart,
   addShippingDetails,
   addPaymentDetails,
   addPaymentMethod,
-  createOrder,
+  resetOrder,
 } = orderSlice.actions
 export const orderReducer = orderSlice.reducer
