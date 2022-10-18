@@ -19,6 +19,7 @@ import {
   selectReviewStatus,
   selectReviewError,
 } from '../redux/reviewSlice'
+import Meta from '../components/Meta'
 
 const ProductScreen = () => {
   const [rating, setRating] = useState(0)
@@ -83,6 +84,7 @@ const ProductScreen = () => {
       ) : (
         // display product if no error is found and not loading
         <>
+          <Meta title={product.name}></Meta>
           <Row>
             <Col md={6}>
               <Image
