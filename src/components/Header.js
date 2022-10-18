@@ -2,6 +2,7 @@ import React from 'react'
 import { LinkContainer } from 'react-router-bootstrap'
 import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap'
 import { useDispatch, useSelector } from 'react-redux'
+import SearchBox from './SearchBox'
 import {
   logoutUser,
   selectUserAuth,
@@ -35,6 +36,7 @@ const Header = () => {
 
           <Navbar.Toggle aria-controls='navbarScroll' />
           <Navbar.Collapse id='navbarScroll'>
+            <SearchBox></SearchBox>
             <Nav
               className='ms-auto'
               style={{ maxHeight: '100px' }}

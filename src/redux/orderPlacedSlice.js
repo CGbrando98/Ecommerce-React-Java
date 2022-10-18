@@ -54,6 +54,27 @@ export const payOrderPlaced = createAsyncThunk(
   }
 )
 
+// api call for admin to set order as delievered
+export const deliverOrderPlaced = createAsyncThunk(
+  'orderPlaced/deliverOrderPlaced',
+  async (input) => {
+    const { token, orderId } = input
+    // console.log(orderId, token)
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+    const res = await axios.put(
+      `http://localhost:8080/api/orders/${orderId}/deliver`,
+      {},
+      config
+    )
+
+    return { ...res.data }
+  }
+)
+
 // setting state
 const orderPlacedSlice = createSlice({
   name: 'orderPlaced',
@@ -82,7 +103,20 @@ const orderPlacedSlice = createSlice({
         state.orderPlaced = action.payload
       })
       .addCase(payOrderPlaced.rejected, (state, action) => {
-        state.status = 'failed'
+        state.status = 'pay error'
+        state.error = action.error.message
+      })
+
+    builder
+      .addCase(deliverOrderPlaced.pending, (state, action) => {
+        state.status = 'loading'
+      })
+      .addCase(deliverOrderPlaced.fulfilled, (state, action) => {
+        state.status = 'order delivered'
+        state.orderPlaced = action.payload
+      })
+      .addCase(deliverOrderPlaced.rejected, (state, action) => {
+        state.status = 'delivery error'
         state.error = action.error.message
       })
   },

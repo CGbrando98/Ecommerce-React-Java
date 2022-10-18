@@ -14,6 +14,7 @@ import {
   selectProductStatus,
   selectProductError,
 } from '../redux/productSlice'
+import axios from 'axios'
 
 const ProductEditScreen = () => {
   const dispatch = useDispatch()
@@ -31,7 +32,9 @@ const ProductEditScreen = () => {
 
   const productId = params.id
 
-  const { access_token: token } = useSelector(selectUserAuth)
+  const user = useSelector(selectUserAuth)
+  const userId = user.userInfo ? user.userInfo.id_user : null
+  const token = user.access_token
 
   const product = useSelector(selectProduct)
   const productStatus = useSelector(selectProductStatus)
@@ -56,7 +59,46 @@ const ProductEditScreen = () => {
   }, [product, dispatch])
 
   const submitHandler = (e) => {
-    // dispatch(updateProduct({ token, userId, username, email, isAdmin }))
+    dispatch(
+      updateProduct({
+        token,
+        userId,
+        productId,
+        name,
+        image,
+        brand,
+        category,
+        stock,
+        price,
+        description,
+      })
+    )
+  }
+
+  const uploadFileHandler = async (e) => {
+    const file = e.target.files[0]
+    const formData = new FormData()
+    formData.append('image', file)
+    setUploading(true)
+    try {
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+
+      const { data } = await axios.post(
+        'http://localhost:8080/api/upload',
+        formData,
+        config
+      )
+      console.log(data)
+      setImage(data.url)
+      setUploading(false)
+    } catch (err) {
+      console.log(err)
+      setUploading(false)
+    }
   }
 
   return (
@@ -113,6 +155,13 @@ const ProductEditScreen = () => {
                 value={image}
                 onChange={(e) => setImage(e.target.value)}
               ></Form.Control>
+              <Form.Control
+                type='file'
+                label='Choose File'
+                custom='true'
+                onChange={uploadFileHandler}
+              ></Form.Control>
+              {uploading && <Loader></Loader>}
             </Form.Group>
             {/* Brand input */}
             <Form.Group

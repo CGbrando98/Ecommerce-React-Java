@@ -6,6 +6,7 @@ import { PayPalButton } from 'react-paypal-button-v2'
 import Message from '../components/Message'
 import Loader from '../components/Loader'
 import {
+  deliverOrderPlaced,
   payOrderPlaced,
   getOrderPlacedById,
   selectOrderPlaced,
@@ -24,7 +25,9 @@ const OrderScreen = () => {
   const navigate = useNavigate()
 
   const user = useSelector(selectUserAuth)
+  const { userInfo } = user
   const userId = user.userInfo ? user.userInfo.id_user : null
+  const role = user.userInfo ? user.userInfo.role : null
   const token = user.access_token
 
   const orderPlaced = useSelector(selectOrderPlaced)
@@ -63,6 +66,10 @@ const OrderScreen = () => {
 
   const successPaymentHandler = (paymentResult) => {
     dispatch(payOrderPlaced({ orderId, token, paymentResult }))
+  }
+
+  const deliverHandler = () => {
+    dispatch(deliverOrderPlaced({ orderId, token }))
   }
 
   return (
@@ -192,6 +199,21 @@ const OrderScreen = () => {
                       />
                     </ListGroup.Item>
                   )}
+                  {orderPlacedStatus === 'loading' && <Loader></Loader>}
+                  {userInfo &&
+                    userInfo.role === 'ROLE_ADMIN' &&
+                    orderPlaced.ispaid &&
+                    !orderPlaced.isdelivered && (
+                      <ListGroup.Item>
+                        <Button
+                          type='button'
+                          className='btn w-100'
+                          onClick={deliverHandler}
+                        >
+                          Mark As Delivered
+                        </Button>
+                      </ListGroup.Item>
+                    )}
                 </ListGroup>
               </Card>
             </Col>

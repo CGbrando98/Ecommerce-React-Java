@@ -29,9 +29,6 @@ export const createProduct = createAsyncThunk(
         category: 'Sample Category',
         price: 0,
         stock: 0,
-        avgrating: 0,
-        reviews: 0,
-        productReviews: [],
       },
       config
     )
@@ -87,6 +84,7 @@ export const updateProduct = createAsyncThunk(
     } = input
     const config = {
       headers: {
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
     }
@@ -139,7 +137,7 @@ const productSlice = createSlice({
         state.status = 'loading'
       })
       .addCase(fetchProduct.fulfilled, (state, action) => {
-        state.status = 'product fetched '
+        state.status = 'product fetched'
         state.error = null
         state.product = action.payload
       })

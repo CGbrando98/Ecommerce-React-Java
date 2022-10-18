@@ -8,6 +8,8 @@ import { orderPlacedReducer } from './orderPlacedSlice'
 import { ordersPlacedReducer } from './ordersPlacedSlice'
 import { usersReducer } from './usersSlice'
 import { userReducer } from './userSlice'
+import { reviewReducer } from './reviewSlice'
+import { topProductsReducer } from './topProductsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -20,5 +22,7 @@ export const store = configureStore({
     userAuth: userAuthReducer,
     userRegister: userRegisterReducer,
     users: usersReducer,
+    review: reviewReducer,
+    topProducts: topProductsReducer,
   },
 })

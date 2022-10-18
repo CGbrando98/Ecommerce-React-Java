@@ -4,6 +4,8 @@ import axios from 'axios'
 // intial state before an actions are dispatched
 const initialState = {
   products: [],
+  page: null,
+  pages: null,
   status: 'idle', // idle, loading, succeeded, failed
   error: null,
 }
@@ -11,10 +13,24 @@ const initialState = {
 // api call
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
-  async () => {
-    const res = await axios.get('http://localhost:8080/api/products')
+  async (page = 1) => {
+    const res = await axios.get(
+      `http://localhost:8080/api/products?page=${page}`
+    )
     // throw new Error('Error testing')
-    return [...res.data]
+    return { ...res.data }
+  }
+)
+
+// api call
+export const queryProducts = createAsyncThunk(
+  'products/queryProducts',
+  async (input) => {
+    const { keyword, page } = input
+    const res = await axios.get(
+      `http://localhost:8080/api/products/query?keyword=${keyword}&page=${page}`
+    )
+    return { ...res.data }
   }
 )
 
@@ -32,9 +48,28 @@ const productsSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.status = 'succeeded'
-        state.products = action.payload
+        state.products = action.payload.products
+        state.page = action.payload.page
+        state.pages = action.payload.pages
+        state.error = null
       })
       .addCase(fetchProducts.rejected, (state, action) => {
+        state.status = 'failed'
+        state.error = action.error.message
+      })
+
+    builder
+      .addCase(queryProducts.pending, (state, action) => {
+        state.status = 'loading'
+      })
+      .addCase(queryProducts.fulfilled, (state, action) => {
+        state.status = 'products queried'
+        state.products = action.payload.products
+        state.page = action.payload.page
+        state.pages = action.payload.pages
+        state.error = null
+      })
+      .addCase(queryProducts.rejected, (state, action) => {
         state.status = 'failed'
         state.error = action.error.message
       })
@@ -42,6 +77,7 @@ const productsSlice = createSlice({
 })
 
 export const selectProducts = (state) => state.products.products
+export const selectPages = (state) => state.products.pages
 export const selectProductsStatus = (state) => state.products.status
 export const selectProductsError = (state) => state.products.error
 
