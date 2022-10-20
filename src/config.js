@@ -1,6 +1,6 @@
 const baseUrl =
-  process.env.NODE_ENV === 'development'
-    ? 'https://techn-application-backend.herokuapp.com'
-    : 'http://localhost:8080'
+  process.env.NODE_ENV === 'production'
+    ? process.env.REACT_APP_MY_PROD_URL
+    : process.env.REACT_APP_MY_DEV_URL
 
 export default baseUrl
