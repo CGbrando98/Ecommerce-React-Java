@@ -15,8 +15,8 @@ const initialState = {
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
   async (page = 1) => {
-  console.log('baseUrl ', baseUrl)
-  console.log('Node env ', process.env.NODE_ENV)
+    console.log('baseUrl ', baseUrl)
+    console.log('Node env ', process.env.REACT_APP_ENV)
     const res = await axios.get(`${baseUrl}/api/products?page=${page}`)
     return { ...res.data }
   }
