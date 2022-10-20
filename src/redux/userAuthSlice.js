@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios'
+import baseUrl from '../config'
 
 // intial state before an actions are dispatched
 const initialState = localStorage.getItem('userAuth')
@@ -25,7 +26,7 @@ export const updateUser = createAsyncThunk(
       },
     }
     const res = await axios.put(
-      `http://localhost:8080/api/users/${userId}`,
+      `${baseUrl}/api/users/${userId}`,
       { username, email, password },
       config
     )
@@ -50,11 +51,7 @@ export const loginUser = createAsyncThunk(
         'Content-Type': 'multipart/form-data',
       },
     }
-    const res = await axios.post(
-      `http://localhost:8080/api/login`,
-      formData,
-      config
-    )
+    const res = await axios.post(`${baseUrl}/api/login`, formData, config)
     // throw new Error('Error testing')
     delete res.data.userInfo.password
     return { ...res.data }

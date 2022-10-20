@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios'
+import baseUrl from '../config'
 
 // intial state before an actions are dispatched
 const initialState = {
@@ -19,7 +20,7 @@ export const createProduct = createAsyncThunk(
       },
     }
     const res = await axios.post(
-      `http://localhost:8080/api/products`,
+      `${baseUrl}/api/products`,
       {
         userid: userId,
         name: 'Sample Name',
@@ -40,9 +41,7 @@ export const createProduct = createAsyncThunk(
 export const fetchProduct = createAsyncThunk(
   'product/fetchProduct',
   async (productId) => {
-    const res = await axios.get(
-      `http://localhost:8080/api/products/${productId}`
-    )
+    const res = await axios.get(`${baseUrl}/api/products/${productId}`)
     // throw new Error('Error testing')
     return { ...res.data }
   }
@@ -59,7 +58,7 @@ export const deleteProduct = createAsyncThunk(
       },
     }
     const res = await axios.delete(
-      `http://localhost:8080/api/products/${productId}`,
+      `${baseUrl}/api/products/${productId}`,
       config
     )
     return { ...res.data }
@@ -89,7 +88,7 @@ export const updateProduct = createAsyncThunk(
       },
     }
     const res = await axios.put(
-      `http://localhost:8080/api/products/${productId}`,
+      `${baseUrl}/api/products/${productId}`,
       {
         userid: userId,
         name,

@@ -15,6 +15,7 @@ import {
 } from '../redux/orderPlacedSlice'
 import { selectUserAuth } from '../redux/userAuthSlice'
 import axios from 'axios'
+import baseUrl from '../config'
 
 const OrderScreen = () => {
   const [sdkReady, setSdkReady] = useState(false)
@@ -45,11 +46,8 @@ const OrderScreen = () => {
     if (!userId) {
       navigate(`/login?redirect=orders/${orderId}`)
     }
-
     const addPaypalScript = async () => {
-      const { data } = await axios.get(
-        'http://localhost:8080/api/config/paypal'
-      )
+      const { data } = await axios.get(`${baseUrl}/api/config/paypal`)
       const script = document.createElement('script')
       script.type = 'text/javascript'
       script.src = `https://www.paypal.com/sdk/js?client-id=${data}`
@@ -59,10 +57,13 @@ const OrderScreen = () => {
     }
     dispatch(getOrderPlacedById({ token, orderId }))
 
+    // add the paypal script if not there
     if (!orderPlaced.ispaid) {
-      addPaypalScript()
+      if (!window.paypal) {
+        addPaypalScript()
+      }
     }
-  }, [dispatch, token, orderId, sdkReady])
+  }, [dispatch, orderId, userId, sdkReady])
 
   const successPaymentHandler = (paymentResult) => {
     dispatch(payOrderPlaced({ orderId, token, paymentResult }))

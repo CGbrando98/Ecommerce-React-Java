@@ -82,7 +82,6 @@ const ProductsScreen = () => {
           </Button>
         </Col>
       </Row>
-      {productsStatus === 'loading' && <Loader></Loader>}
       {productsError && <Message variant='danger'>{productsError}</Message>}
       {productsStatus === 'loading' ? (
         <Loader></Loader>

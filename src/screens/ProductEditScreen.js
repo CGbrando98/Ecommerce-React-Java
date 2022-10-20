@@ -15,6 +15,7 @@ import {
   selectProductError,
 } from '../redux/productSlice'
 import axios from 'axios'
+import baseUrl from '../config'
 
 const ProductEditScreen = () => {
   const dispatch = useDispatch()
@@ -88,7 +89,7 @@ const ProductEditScreen = () => {
       }
 
       const { data } = await axios.post(
-        'http://localhost:8080/api/upload',
+        `${baseUrl}/api/upload`,
         formData,
         config
       )

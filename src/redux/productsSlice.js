@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios'
+import baseUrl from '../config'
 
 // intial state before an actions are dispatched
 const initialState = {
@@ -14,10 +15,7 @@ const initialState = {
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
   async (page = 1) => {
-    const res = await axios.get(
-      `http://localhost:8080/api/products?page=${page}`
-    )
-    // throw new Error('Error testing')
+    const res = await axios.get(`${baseUrl}/api/products?page=${page}`)
     return { ...res.data }
   }
 )
@@ -28,7 +26,7 @@ export const queryProducts = createAsyncThunk(
   async (input) => {
     const { keyword, page } = input
     const res = await axios.get(
-      `http://localhost:8080/api/products/query?keyword=${keyword}&page=${page}`
+      `${baseUrl}/api/products/query?keyword=${keyword}&page=${page}`
     )
     return { ...res.data }
   }

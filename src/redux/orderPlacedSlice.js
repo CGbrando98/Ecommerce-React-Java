@@ -1,6 +1,7 @@
 // src/redux/cartSlice.js
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios'
+import baseUrl from '../config'
 
 const initialState = {
   orderPlaced: {},
@@ -18,10 +19,7 @@ export const getOrderPlacedById = createAsyncThunk(
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.get(
-      `http://localhost:8080/api/orders/${orderId}`,
-      config
-    )
+    const res = await axios.get(`${baseUrl}/api/orders/${orderId}`, config)
 
     return { ...res.data }
   }
@@ -40,7 +38,7 @@ export const payOrderPlaced = createAsyncThunk(
       },
     }
     const res = await axios.put(
-      `http://localhost:8080/api/orders/${orderId}/pay`,
+      `${baseUrl}/api/orders/${orderId}/pay`,
       {
         id_paymentpaypal: paymentResult.id,
         paymentstatus: paymentResult.status,
@@ -66,7 +64,7 @@ export const deliverOrderPlaced = createAsyncThunk(
       },
     }
     const res = await axios.put(
-      `http://localhost:8080/api/orders/${orderId}/deliver`,
+      `${baseUrl}/api/orders/${orderId}/deliver`,
       {},
       config
     )

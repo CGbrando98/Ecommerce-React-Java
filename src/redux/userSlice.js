@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios'
+import baseUrl from '../config'
 
 // api call
 export const fetchUser = createAsyncThunk('user/fetchUser', async (input) => {
@@ -9,10 +10,7 @@ export const fetchUser = createAsyncThunk('user/fetchUser', async (input) => {
       Authorization: `Bearer ${token}`,
     },
   }
-  const res = await axios.get(
-    `http://localhost:8080/api/users/${userId}`,
-    config
-  )
+  const res = await axios.get(`${baseUrl}/api/users/${userId}`, config)
   return { ...res.data }
 })
 
@@ -26,10 +24,7 @@ export const deleteUser = createAsyncThunk(
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.delete(
-      `http://localhost:8080/api/users/${userId}`,
-      config
-    )
+    const res = await axios.delete(`${baseUrl}/api/users/${userId}`, config)
     return { ...res.data }
   }
 )
@@ -46,7 +41,7 @@ export const updateUserAsAdmin = createAsyncThunk(
       },
     }
     const res = await axios.put(
-      `http://localhost:8080/api/users/${userId}`,
+      `${baseUrl}/api/users/${userId}`,
       { username, email, role },
       config
     )

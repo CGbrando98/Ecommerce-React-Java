@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios'
+import baseUrl from '../config'
 
 // intial state before an actions are dispatched
 const initialState = {
@@ -17,7 +18,7 @@ export const fetchUsers = createAsyncThunk(
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.get(`http://localhost:8080/api/users`, config)
+    const res = await axios.get(`${baseUrl}/api/users`, config)
     return [...res.data]
   }
 )

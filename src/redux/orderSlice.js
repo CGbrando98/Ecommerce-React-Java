@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import axios from 'axios'
+import baseUrl from '../config'
 
 const initialState = localStorage.getItem('order')
   ? { ...JSON.parse(localStorage.getItem('order')), status: 'idle' }
@@ -35,7 +36,7 @@ const initialState = localStorage.getItem('order')
 // api call to get products in the cartScreen
 export const addToCart = createAsyncThunk('cart/addToCart', async (input) => {
   const { productId, productQty } = input
-  const res = await axios.get(`http://localhost:8080/api/products/${productId}`)
+  const res = await axios.get(`${baseUrl}/api/products/${productId}`)
   const { data } = res
   // throw new Error('Error testing')
   return {
@@ -69,7 +70,7 @@ export const CreateAndSendOrder = createAsyncThunk(
       },
     }
     const res = await axios.post(
-      `http://localhost:8080/api/orders`,
+      `${baseUrl}/api/orders`,
       {
         // the user is already in the DB while the other nested objects aren't
         userid: userId,
