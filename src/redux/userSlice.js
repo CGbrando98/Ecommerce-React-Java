@@ -3,36 +3,47 @@ import axios from 'axios'
 import baseUrl from '../config'
 
 // api call
-export const fetchUser = createAsyncThunk('user/fetchUser', async (input) => {
-  const { token, userId } = input
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  }
-  const res = await axios.get(`${baseUrl}/api/users/${userId}`, config)
-  return { ...res.data }
-})
-
-// api call
-export const deleteUser = createAsyncThunk(
-  'userDelete/deleteUser',
-  async (input) => {
+export const fetchUser = createAsyncThunk(
+  'user/fetchUser',
+  async (input, { rejectWithValue }) => {
     const { token, userId } = input
     const config = {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.delete(`${baseUrl}/api/users/${userId}`, config)
-    return { ...res.data }
+    try {
+      const res = await axios.get(`${baseUrl}/api/users/${userId}`, config)
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
+  }
+)
+
+// api call
+export const deleteUser = createAsyncThunk(
+  'userDelete/deleteUser',
+  async (input, { rejectWithValue }) => {
+    const { token, userId } = input
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+    try {
+      const res = await axios.delete(`${baseUrl}/api/users/${userId}`, config)
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
 // api call for updating fetched user as admin
 export const updateUserAsAdmin = createAsyncThunk(
   'user/updateUserAsAdmin',
-  async (input) => {
+  async (input, { rejectWithValue }) => {
     const { token, userId, username, email, isAdmin } = input
     const role = isAdmin ? 'ROLE_ADMIN' : 'ROLE_USER'
     const config = {
@@ -40,12 +51,16 @@ export const updateUserAsAdmin = createAsyncThunk(
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.put(
-      `${baseUrl}/api/users/${userId}`,
-      { username, email, role },
-      config
-    )
-    return { ...res.data }
+    try {
+      const res = await axios.put(
+        `${baseUrl}/api/users/${userId}`,
+        { username, email, role },
+        config
+      )
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
@@ -71,13 +86,13 @@ const userSlice = createSlice({
         state.status = 'loading'
       })
       .addCase(fetchUser.fulfilled, (state, action) => {
-        state.status = 'User Fetched'
+        state.status = 'user fetched'
         state.error = null
         state.user = action.payload
       })
       .addCase(fetchUser.rejected, (state, action) => {
-        state.status = 'fetch Error'
-        state.error = action.payload
+        state.status = 'error fetching user'
+        state.error = action.payload.message
       })
 
     builder
@@ -85,12 +100,12 @@ const userSlice = createSlice({
         state.status = 'loading'
       })
       .addCase(deleteUser.fulfilled, (state, action) => {
-        state.status = 'User Deleted'
+        state.status = 'user deleted'
         state.error = null
         state.user = {}
       })
       .addCase(deleteUser.rejected, (state, action) => {
-        state.status = 'Deletion Error'
+        state.status = 'error deleting user'
         state.error = action.payload.message
       })
 
@@ -99,13 +114,13 @@ const userSlice = createSlice({
         state.status = 'loading'
       })
       .addCase(updateUserAsAdmin.fulfilled, (state, action) => {
-        state.status = 'User Updated by Admin'
+        state.status = 'user updated by admin'
         state.error = null
         state.user = action.payload
       })
       .addCase(updateUserAsAdmin.rejected, (state, action) => {
-        state.status = 'Update Error'
-        state.error = action.payload
+        state.status = 'error updating user by admin'
+        state.error = action.payload.message
       })
   },
 })

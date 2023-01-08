@@ -12,14 +12,18 @@ const initialState = {
 // api call
 export const fetchUsers = createAsyncThunk(
   'users/fetchUsers',
-  async (token) => {
+  async (token, { rejectWithValue }) => {
     const config = {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.get(`${baseUrl}/api/users`, config)
-    return [...res.data]
+    try {
+      const res = await axios.get(`${baseUrl}/api/users`, config)
+      return [...res.data]
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
@@ -40,13 +44,13 @@ const usersSlice = createSlice({
         state.status = 'loading'
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
-        state.status = 'fetched Users'
+        state.status = 'users fetched '
         state.users = action.payload
         state.error = null
       })
       .addCase(fetchUsers.rejected, (state, action) => {
-        state.status = 'Error'
-        state.error = action.error.message
+        state.status = 'error fetching users'
+        state.error = action.payload.message
       })
   },
 })

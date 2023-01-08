@@ -13,9 +13,10 @@ import {
   selectOrderPlacedStatus,
   selectOrderPlacedError,
 } from '../redux/orderPlacedSlice'
-import { selectUserAuth } from '../redux/userAuthSlice'
+import { selectUserAuth, selectUserAuthError } from '../redux/userAuthSlice'
 import axios from 'axios'
 import baseUrl from '../config'
+import tokenCheck from '../tokenExchange'
 
 const OrderScreen = () => {
   const [sdkReady, setSdkReady] = useState(false)
@@ -26,10 +27,12 @@ const OrderScreen = () => {
   const navigate = useNavigate()
 
   const user = useSelector(selectUserAuth)
+  const userError = useSelector(selectUserAuthError)
   const { userInfo } = user
   const userId = user.userInfo ? user.userInfo.id_user : null
   const role = user.userInfo ? user.userInfo.role : null
   const token = user.access_token
+  const refreshToken = user ? user.refresh_token : null
 
   const orderPlaced = useSelector(selectOrderPlaced)
   // fix warning on this page
@@ -43,9 +46,6 @@ const OrderScreen = () => {
   const orderPlacedError = useSelector(selectOrderPlacedError)
 
   useEffect(() => {
-    if (!userId) {
-      navigate(`/login?redirect=orders/${orderId}`)
-    }
     const addPaypalScript = async () => {
       const { data } = await axios.get(`${baseUrl}/api/config/paypal`)
       const script = document.createElement('script')
@@ -55,7 +55,14 @@ const OrderScreen = () => {
       script.onload = () => setSdkReady(true)
       document.body.appendChild(script)
     }
-    dispatch(getOrderPlacedById({ token, orderId }))
+
+    if (!userId) {
+      navigate(`/login?redirect=orders/${orderId}`)
+    } else if (
+      !(orderPlacedError?.substring(0, 29) === 'Access: The Token has expired')
+    ) {
+      dispatch(getOrderPlacedById({ token, orderId }))
+    }
 
     // add the paypal script if not there
     if (!orderPlaced.ispaid) {
@@ -63,7 +70,19 @@ const OrderScreen = () => {
         addPaypalScript()
       }
     }
-  }, [dispatch, orderId, userId, sdkReady])
+
+    tokenCheck(dispatch, userId, orderPlacedError, userError, refreshToken)
+  }, [
+    dispatch,
+    navigate,
+    user,
+    token,
+    orderPlacedError,
+    userError,
+    orderId,
+    userId,
+    sdkReady,
+  ])
 
   const successPaymentHandler = (paymentResult) => {
     dispatch(payOrderPlaced({ orderId, token, paymentResult }))

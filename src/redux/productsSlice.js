@@ -14,23 +14,30 @@ const initialState = {
 // api call
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
-  async (page = 1) => {
-    console.log('baseUrl ', baseUrl)
-    console.log('Node env ', process.env.REACT_APP_ENV)
-    const res = await axios.get(`${baseUrl}/api/products?page=${page}`)
-    return { ...res.data }
+  async (page = 1, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${baseUrl}/api/products?page=${page}`)
+      console.log(res.data)
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
 // api call
 export const queryProducts = createAsyncThunk(
   'products/queryProducts',
-  async (input) => {
+  async (input, { rejectWithValue }) => {
     const { keyword, page } = input
-    const res = await axios.get(
-      `${baseUrl}/api/products/query?keyword=${keyword}&page=${page}`
-    )
-    return { ...res.data }
+    try {
+      const res = await axios.get(
+        `${baseUrl}/api/products/query?keyword=${keyword}&page=${page}`
+      )
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
@@ -47,15 +54,15 @@ const productsSlice = createSlice({
         state.status = 'loading'
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
-        state.status = 'succeeded'
+        state.status = 'products fetched'
         state.products = action.payload.products
         state.page = action.payload.page
         state.pages = action.payload.pages
         state.error = null
       })
       .addCase(fetchProducts.rejected, (state, action) => {
-        state.status = 'failed'
-        state.error = action.error.message
+        state.status = 'error fetching products'
+        state.error = action.payload.message
       })
 
     builder
@@ -70,8 +77,8 @@ const productsSlice = createSlice({
         state.error = null
       })
       .addCase(queryProducts.rejected, (state, action) => {
-        state.status = 'failed'
-        state.error = action.error.message
+        state.status = 'error querying products'
+        state.error = action.payload.message
       })
   },
 })

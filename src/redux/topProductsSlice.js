@@ -12,9 +12,14 @@ const initialState = {
 // api call
 export const fetchTopProducts = createAsyncThunk(
   'topProducts/fetchTopProducts',
-  async () => {
-    const res = await axios.get(`${baseUrl}/api/products/top`)
-    return [...res.data]
+  // rejectWithValue cannot be first value
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${baseUrl}/api/products/top`)
+      return [...res.data]
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
@@ -34,8 +39,8 @@ const topProductsSlice = createSlice({
         state.error = null
       })
       .addCase(fetchTopProducts.rejected, (state, action) => {
-        state.status = 'fetch error'
-        state.error = action.error.message
+        state.status = 'error fetching top products'
+        state.error = action.payload.message
       })
   },
 })

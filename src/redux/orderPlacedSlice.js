@@ -12,23 +12,27 @@ const initialState = {
 // api call to get order by id
 export const getOrderPlacedById = createAsyncThunk(
   'orderPlaced/getOrderPlacedById',
-  async (input) => {
+  async (input, { rejectWithValue }) => {
     const { token, orderId } = input
     const config = {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.get(`${baseUrl}/api/orders/${orderId}`, config)
+    try {
+      const res = await axios.get(`${baseUrl}/api/orders/${orderId}`, config)
 
-    return { ...res.data }
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
 // api call to pay for order
 export const payOrderPlaced = createAsyncThunk(
   'orderPlaced/payOrderPlaced',
-  async (input) => {
+  async (input, { rejectWithValue }) => {
     const { token, orderId, paymentResult } = input
     // console.log(paymentResult)
     const config = {
@@ -37,25 +41,29 @@ export const payOrderPlaced = createAsyncThunk(
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.put(
-      `${baseUrl}/api/orders/${orderId}/pay`,
-      {
-        id_paymentpaypal: paymentResult.id,
-        paymentstatus: paymentResult.status,
-        paymentupdatetime: paymentResult.update_time,
-        paymentemail: paymentResult.payer.email_address,
-      },
-      config
-    )
-
-    return { ...res.data }
+    try {
+      const res = await axios.put(
+        `${baseUrl}/api/orders/${orderId}/pay`,
+        {
+          id_paymentpaypal: paymentResult.id,
+          paymentstatus: paymentResult.status,
+          paymentupdatetime: paymentResult.update_time,
+          paymentemail: paymentResult.payer.email_address,
+        },
+        config
+      )
+      console.log({ ...res.data })
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
 // api call for admin to set order as delievered
 export const deliverOrderPlaced = createAsyncThunk(
   'orderPlaced/deliverOrderPlaced',
-  async (input) => {
+  async (input, { rejectWithValue }) => {
     const { token, orderId } = input
     // console.log(orderId, token)
     const config = {
@@ -63,13 +71,17 @@ export const deliverOrderPlaced = createAsyncThunk(
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.put(
-      `${baseUrl}/api/orders/${orderId}/deliver`,
-      {},
-      config
-    )
+    try {
+      const res = await axios.put(
+        `${baseUrl}/api/orders/${orderId}/deliver`,
+        {},
+        config
+      )
 
-    return { ...res.data }
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
@@ -77,7 +89,13 @@ export const deliverOrderPlaced = createAsyncThunk(
 const orderPlacedSlice = createSlice({
   name: 'orderPlaced',
   initialState,
-  reducers: {},
+  reducers: {
+    resetOrderPlaced: (state, action) => {
+      state.orderPlaced = {}
+      state.status = 'idle'
+      state.error = null
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getOrderPlacedById.pending, (state, action) => {
@@ -88,8 +106,8 @@ const orderPlacedSlice = createSlice({
         state.orderPlaced = action.payload
       })
       .addCase(getOrderPlacedById.rejected, (state, action) => {
-        state.status = 'failed'
-        state.error = action.error.message
+        state.status = 'error fetching order by id'
+        state.error = action.payload.message
       })
 
     builder
@@ -102,7 +120,7 @@ const orderPlacedSlice = createSlice({
       })
       .addCase(payOrderPlaced.rejected, (state, action) => {
         state.status = 'pay error'
-        state.error = action.error.message
+        state.error = action.payload.message
       })
 
     builder
@@ -115,7 +133,7 @@ const orderPlacedSlice = createSlice({
       })
       .addCase(deliverOrderPlaced.rejected, (state, action) => {
         state.status = 'delivery error'
-        state.error = action.error.message
+        state.error = action.payload.message
       })
   },
 })
@@ -124,4 +142,5 @@ export const selectOrderPlaced = (state) => state.orderPlaced.orderPlaced
 export const selectOrderPlacedStatus = (state) => state.orderPlaced.status
 export const selectOrderPlacedError = (state) => state.orderPlaced.error
 
+export const { resetOrderPlaced } = orderPlacedSlice.actions
 export const orderPlacedReducer = orderPlacedSlice.reducer

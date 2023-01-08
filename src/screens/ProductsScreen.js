@@ -20,9 +20,10 @@ import {
   selectProductStatus,
   selectProductError,
 } from '../redux/productSlice'
-import { selectUserAuth } from '../redux/userAuthSlice'
+import { selectUserAuth, selectUserAuthError } from '../redux/userAuthSlice'
 import { useParams } from 'react-router-dom'
 import Paginate from '../components/Paginate'
+import tokenCheck from '../tokenExchange'
 
 const ProductsScreen = () => {
   const dispatch = useDispatch()
@@ -32,7 +33,9 @@ const ProductsScreen = () => {
   const page = pageNumber ? pageNumber : 1
 
   const user = useSelector(selectUserAuth)
+  const userError = useSelector(selectUserAuthError)
   const token = user.access_token
+  const refreshToken = user ? user.refresh_token : null
   const userId = user.userInfo ? user.userInfo.id_user : null
   const role = user.userInfo ? user.userInfo.role : null
 
@@ -46,16 +49,23 @@ const ProductsScreen = () => {
   const productError = useSelector(selectProductError)
 
   useEffect(() => {
-    if (user.userInfo && role === 'ROLE_ADMIN') {
-      dispatch(fetchProducts(page))
-    } else {
+    if (!userId) {
       navigate('/login')
+    } else if (
+      user.userInfo &&
+      role === 'ROLE_ADMIN' &&
+      !(productError?.substring(0, 29) === 'Access: The Token has expired')
+    ) {
+      dispatch(fetchProducts(page))
     }
+
     if (productStatus === 'product created') {
       navigate(`/admin/products/${product.id_product}/edit`)
       dispatch(resetProduct())
     }
-  }, [dispatch, navigate, user, productStatus])
+    // we use productError since products can be feteched by anyone
+    tokenCheck(dispatch, userId, productError, userError, refreshToken)
+  }, [dispatch, navigate, productStatus, user, token, productError, userError])
 
   const createProductHandler = () => {
     dispatch(createProduct({ token, userId }))

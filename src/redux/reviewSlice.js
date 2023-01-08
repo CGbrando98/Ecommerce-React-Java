@@ -46,11 +46,11 @@ const reviewSlice = createSlice({
         state.status = 'loading'
       })
       .addCase(createReview.fulfilled, (state, action) => {
-        state.status = 'Review Submitted'
+        state.status = 'review submitted'
         state.error = null
       })
       .addCase(createReview.rejected, (state, action) => {
-        state.status = 'Submission Error'
+        state.status = 'error submitting review '
         state.error = action.payload.message
       })
   },

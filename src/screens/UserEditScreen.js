@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import Message from '../components/Message'
 import Loader from '../components/Loader'
 import FormContainer from '../components/FormContainer'
-import { selectUserAuth } from '../redux/userAuthSlice'
+import { selectUserAuth, selectUserAuthError } from '../redux/userAuthSlice'
 import {
   fetchUserReset,
   fetchUser,
@@ -14,6 +14,7 @@ import {
   selectUserError,
   selectUserStatus,
 } from '../redux/userSlice'
+import tokenCheck from '../tokenExchange'
 
 const UserEditScreen = () => {
   const dispatch = useDispatch()
@@ -23,26 +24,42 @@ const UserEditScreen = () => {
   const [email, setEmail] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
 
-  const userId = params.id
-  const { access_token: token } = useSelector(selectUserAuth)
+  const user = useSelector(selectUserAuth)
+  const userAuthId = user.userInfo ? user.userInfo.id_user : null
+  const userError = useSelector(selectUserAuthError)
+  const token = user.access_token
+  const refreshToken = user ? user.refresh_token : null
 
+  const userId = params.id
   const userFetchedById = useSelector(selectUser)
   const userFetchedByIdStatus = useSelector(selectUserStatus)
   const userFetchedByIdError = useSelector(selectUserError)
 
   useEffect(() => {
-    if (!userFetchedById.id_user || userFetchedById.id_user != userId) {
-      dispatch(fetchUser({ token, userId }))
+    if (!userAuthId) {
+      navigate('/login')
     } else {
-      setUsername(userFetchedById.username)
-      setEmail(userFetchedById.email)
-      setIsAdmin(userFetchedById.role === 'ROLE_ADMIN' ? true : false)
+      if (!userFetchedById.id_user || userFetchedById.id_user != userId) {
+        dispatch(fetchUser({ token, userId }))
+      } else {
+        setUsername(userFetchedById.username)
+        setEmail(userFetchedById.email)
+        setIsAdmin(userFetchedById.role === 'ROLE_ADMIN' ? true : false)
+      }
+      if (userFetchedByIdStatus === 'User Updated by Admin') {
+        navigate('/admin/users')
+        dispatch(fetchUserReset())
+      }
     }
-    if (userFetchedByIdStatus === 'User Updated by Admin') {
-      navigate('/admin/users')
-      dispatch(fetchUserReset())
-    }
-  }, [userFetchedById, dispatch])
+
+    tokenCheck(
+      dispatch,
+      userAuthId,
+      userFetchedByIdError,
+      userError,
+      refreshToken
+    )
+  }, [dispatch, userFetchedById, user, token, userFetchedByIdError, userError])
 
   const submitHandler = (e) => {
     dispatch(updateUserAsAdmin({ token, userId, username, email, isAdmin }))
