@@ -12,34 +12,42 @@ const initialState = {
 // api call to get orders by id
 export const getOrdersPlacedByUserId = createAsyncThunk(
   'ordersPlaced/getOrdersPlacedByUserId',
-  async (input) => {
+  async (input, { rejectWithValue }) => {
     const { token, userId } = input
     const config = {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.get(
-      `${baseUrl}/api/orders/profile/${userId}`,
-      config
-    )
+    try {
+      const res = await axios.get(
+        `${baseUrl}/api/orders/profile/${userId}`,
+        config
+      )
 
-    return [...res.data]
+      return [...res.data]
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
 // api call to get orders
 export const getOrdersPlaced = createAsyncThunk(
   'ordersPlaced/getOrdersPlaced',
-  async (token) => {
+  async (token, { rejectWithValue }) => {
     const config = {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.get(`${baseUrl}/api/orders`, config)
+    try {
+      const res = await axios.get(`${baseUrl}/api/orders`, config)
 
-    return [...res.data]
+      return [...res.data]
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
@@ -47,19 +55,26 @@ export const getOrdersPlaced = createAsyncThunk(
 const ordersPlacedSlice = createSlice({
   name: 'ordersPlaced',
   initialState,
-  reducers: {},
+  reducers: {
+    resetOrdersPlaced: (state, action) => {
+      state.ordersPlaced = []
+      state.status = 'idle'
+      state.error = null
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getOrdersPlacedByUserId.pending, (state, action) => {
         state.status = 'loading'
       })
       .addCase(getOrdersPlacedByUserId.fulfilled, (state, action) => {
-        state.status = 'orders fetched By User Id'
+        state.status = 'orders fetched by user id'
         state.ordersPlaced = action.payload
+        state.error = null
       })
       .addCase(getOrdersPlacedByUserId.rejected, (state, action) => {
-        state.status = 'failed'
-        state.error = action.error.message
+        state.status = 'error fetching orders by user id'
+        state.error = action.payload.message
       })
 
     builder
@@ -67,12 +82,13 @@ const ordersPlacedSlice = createSlice({
         state.status = 'loading'
       })
       .addCase(getOrdersPlaced.fulfilled, (state, action) => {
-        state.status = 'All orders fetched'
+        state.status = 'all orders fetched'
         state.ordersPlaced = action.payload
+        state.error = null
       })
       .addCase(getOrdersPlaced.rejected, (state, action) => {
-        state.status = 'failed'
-        state.error = action.error.message
+        state.status = 'error fetching all orders'
+        state.error = action.payload.message
       })
   },
 })
@@ -81,4 +97,5 @@ export const selectOrdersPlaced = (state) => state.ordersPlaced.ordersPlaced
 export const selectOrdersPlacedStatus = (state) => state.ordersPlaced.status
 export const selectOrdersPlacedError = (state) => state.ordersPlaced.error
 
+export const { resetOrdersPlaced } = ordersPlacedSlice.actions
 export const ordersPlacedReducer = ordersPlacedSlice.reducer

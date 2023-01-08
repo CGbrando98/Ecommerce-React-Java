@@ -16,7 +16,7 @@ const initialState = localStorage.getItem('userAuth')
 // api for updating profile
 export const updateUser = createAsyncThunk(
   'userAuth/updateUser',
-  async (input) => {
+  async (input, { rejectWithValue }) => {
     const { username, email, password, userId, token } = input
     console.log('hit update', userId)
     const config = {
@@ -25,22 +25,24 @@ export const updateUser = createAsyncThunk(
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.put(
-      `${baseUrl}/api/users/${userId}`,
-      { username, email, password },
-      config
-    )
-    delete res.data.password
-    console.log(res.data)
-    // throw new Error('Error testing')
-    return { ...res.data }
+    try {
+      const res = await axios.put(
+        `${baseUrl}/api/users/${userId}`,
+        { username, email, password },
+        config
+      )
+      delete res.data.password
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
 // api call for logging in user
 export const loginUser = createAsyncThunk(
   'userAuth/loginUser',
-  async (input) => {
+  async (input, { rejectWithValue }) => {
     const { username, password } = input
     // console.log(username, password)
     const formData = new FormData()
@@ -51,10 +53,32 @@ export const loginUser = createAsyncThunk(
         'Content-Type': 'multipart/form-data',
       },
     }
-    const res = await axios.post(`${baseUrl}/api/login`, formData, config)
-    // throw new Error('Error testing')
-    delete res.data.userInfo.password
-    return { ...res.data }
+    try {
+      const res = await axios.post(`${baseUrl}/api/login`, formData, config)
+      // throw new Error('Error testing')
+      delete res.data.userInfo.password
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
+  }
+)
+
+// api call for getting a new access token using refresh token
+export const newAccessToken = createAsyncThunk(
+  'userAuth/newAccessToken',
+  async (refreshToken, { rejectWithValue }) => {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${refreshToken}`,
+      },
+    }
+    try {
+      const res = await axios.get(`${baseUrl}/api/users/token/refresh`, config)
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
@@ -83,7 +107,7 @@ const userAuthSlice = createSlice({
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.status = 'bad credentials'
-        state.error = action.error.message
+        state.error = null
       })
 
     builder
@@ -91,7 +115,7 @@ const userAuthSlice = createSlice({
         state.status = 'loading'
       })
       .addCase(updateUser.fulfilled, (state, action) => {
-        state.status = 'update success'
+        state.status = 'user updated'
         state.user.userInfo = {
           ...state.user.userInfo,
           username: action.payload.username,
@@ -102,8 +126,24 @@ const userAuthSlice = createSlice({
         localStorage.setItem('userAuth', JSON.stringify(state))
       })
       .addCase(updateUser.rejected, (state, action) => {
-        state.status = 'update failed'
-        state.error = action.error.message
+        state.status = 'error updating user'
+        state.error = action.payload.message
+      })
+
+    builder
+      .addCase(newAccessToken.pending, (state, action) => {
+        state.status = 'loading'
+      })
+      .addCase(newAccessToken.fulfilled, (state, action) => {
+        state.status = 'new access token obtained'
+        state.user.access_token = action.payload.access_token
+        state.user.refresh_token = action.payload.refresh_token
+        state.error = null
+        localStorage.setItem('userAuth', JSON.stringify(state))
+      })
+      .addCase(newAccessToken.rejected, (state, action) => {
+        state.status = 'error obtaining new access token'
+        state.error = action.payload.message
       })
   },
 })

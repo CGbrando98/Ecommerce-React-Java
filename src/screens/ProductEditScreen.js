@@ -5,7 +5,11 @@ import { useDispatch, useSelector } from 'react-redux'
 import Message from '../components/Message'
 import Loader from '../components/Loader'
 import FormContainer from '../components/FormContainer'
-import { selectUserAuth } from '../redux/userAuthSlice'
+import {
+  selectUserAuth,
+  selectUserAuthError,
+  selectUserAuthStatus,
+} from '../redux/userAuthSlice'
 import {
   resetProduct,
   fetchProduct,
@@ -16,6 +20,7 @@ import {
 } from '../redux/productSlice'
 import axios from 'axios'
 import baseUrl from '../config'
+import tokenCheck from '../tokenExchange'
 
 const ProductEditScreen = () => {
   const dispatch = useDispatch()
@@ -34,30 +39,39 @@ const ProductEditScreen = () => {
   const productId = params.id
 
   const user = useSelector(selectUserAuth)
+  const userError = useSelector(selectUserAuthError)
+  const userStatus = useSelector(selectUserAuthStatus)
   const userId = user.userInfo ? user.userInfo.id_user : null
   const token = user.access_token
+  const refreshToken = user ? user.refresh_token : null
 
   const product = useSelector(selectProduct)
   const productStatus = useSelector(selectProductStatus)
   const productError = useSelector(selectProductError)
 
   useEffect(() => {
-    if (!product.id_product || product.id_product != productId) {
-      dispatch(fetchProduct(productId))
+    if (!userId) {
+      navigate('/login')
     } else {
-      setName(product.name)
-      setPrice(product.price)
-      setImage(product.image)
-      setBrand(product.brand)
-      setCategory(product.category)
-      setStock(product.stock)
-      setDescription(product.description)
+      if (!product.id_product || product.id_product != productId) {
+        dispatch(fetchProduct(productId))
+      } else {
+        setName(product.name)
+        setPrice(product.price)
+        setImage(product.image)
+        setBrand(product.brand)
+        setCategory(product.category)
+        setStock(product.stock)
+        setDescription(product.description)
+      }
+      if (productStatus === 'product updated') {
+        navigate('/admin/products')
+        dispatch(resetProduct())
+      }
     }
-    if (productStatus === 'product updated') {
-      navigate('/admin/products')
-      dispatch(resetProduct())
-    }
-  }, [product, dispatch])
+
+    tokenCheck(dispatch, userId, productError, userError, refreshToken)
+  }, [dispatch, product, user, token, productError, userError])
 
   const submitHandler = (e) => {
     dispatch(

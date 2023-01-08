@@ -34,25 +34,32 @@ const initialState = localStorage.getItem('order')
     }
 
 // api call to get products in the cartScreen
-export const addToCart = createAsyncThunk('cart/addToCart', async (input) => {
-  const { productId, productQty } = input
-  const res = await axios.get(`${baseUrl}/api/products/${productId}`)
-  const { data } = res
-  // throw new Error('Error testing')
-  return {
-    product: data.id_product,
-    name: data.name,
-    image: data.image,
-    price: data.price,
-    stock: data.stock,
-    qty: productQty,
+export const addToCart = createAsyncThunk(
+  'cart/addToCart',
+  async (input, { rejectWithValue }) => {
+    const { productId, productQty } = input
+    try {
+      const res = await axios.get(`${baseUrl}/api/products/${productId}`)
+      const { data } = res
+
+      return {
+        product: data.id_product,
+        name: data.name,
+        image: data.image,
+        price: data.price,
+        stock: data.stock,
+        qty: productQty,
+      }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
-})
+)
 
 // api call to send order
 export const CreateAndSendOrder = createAsyncThunk(
   'order/sendOrder',
-  async (input) => {
+  async (input, { rejectWithValue }) => {
     const {
       token,
       order,
@@ -69,30 +76,34 @@ export const CreateAndSendOrder = createAsyncThunk(
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.post(
-      `${baseUrl}/api/orders`,
-      {
-        // the user is already in the DB while the other nested objects aren't
-        userid: userId,
-        items: order.cart,
-        shipping: {
-          ...order.shippingDetails,
-          postal: order.shippingDetails.postalCode,
+    try {
+      const res = await axios.post(
+        `${baseUrl}/api/orders`,
+        {
+          // the user is already in the DB while the other nested objects aren't
+          userid: userId,
+          items: order.cart,
+          shipping: {
+            ...order.shippingDetails,
+            postal: order.shippingDetails.postalCode,
+          },
+          payment: { ...order.paymentDetails },
+          paymentmethod: order.paymentMethod,
+          itemsprice: itemsPrice,
+          taxprice: taxPrice,
+          shippingprice: shippingPrice,
+          totalprice: totalPrice,
+          ispaid: order.isPaid,
+          paidat: order.paidAt,
+          isdelivered: order.isDelivered,
+          deliveredat: order.deliveredAt,
         },
-        payment: { ...order.paymentDetails },
-        paymentmethod: order.paymentMethod,
-        itemsprice: itemsPrice,
-        taxprice: taxPrice,
-        shippingprice: shippingPrice,
-        totalprice: totalPrice,
-        ispaid: order.isPaid,
-        paidat: order.paidAt,
-        isdelivered: order.isDelivered,
-        deliveredat: order.deliveredAt,
-      },
-      config
-    )
-    return { ...res.data }
+        config
+      )
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
@@ -143,6 +154,7 @@ const orderSlice = createSlice({
         taxPrice: null,
         shippingPrice: null,
         totalPrice: null,
+        error: null,
       }
       localStorage.setItem('order', JSON.stringify(returnedState))
       return returnedState
@@ -163,13 +175,13 @@ const orderSlice = createSlice({
             cart: state.cart.map((x) =>
               x.product === existsItem.product ? item : x
             ),
-            status: 'succeeded',
+            status: 'item added to order',
           }
         } else {
           returnedState = {
             ...state,
             cart: [...state.cart, item],
-            status: 'succeeded',
+            status: 'item added to order',
           }
         }
         localStorage.setItem('order', JSON.stringify(returnedState))
@@ -177,7 +189,7 @@ const orderSlice = createSlice({
       })
       .addCase(addToCart.rejected, (state, action) => {
         state.status = 'failed'
-        state.error = action.error.message
+        state.error = action.payload.message
       })
 
     builder
@@ -201,7 +213,7 @@ const orderSlice = createSlice({
       })
       .addCase(CreateAndSendOrder.rejected, (state, action) => {
         state.status = 'order rejected'
-        state.error = action.error.message
+        state.error = action.payload.message
       })
   },
 })
@@ -209,6 +221,7 @@ const orderSlice = createSlice({
 // maybe this state should be called order
 export const selectOrder = (state) => state.order
 export const selectOrderStatus = (state) => state.order.status
+export const selectOrderError = (state) => state.order.error
 export const selectCart = (state) => state.order.cart
 export const selectShippingDetails = (state) => state.order.shippingDetails
 export const selectPaymentMethod = (state) => state.order.paymentMethod

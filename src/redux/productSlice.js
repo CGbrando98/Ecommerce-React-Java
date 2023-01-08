@@ -12,63 +12,74 @@ const initialState = {
 // api call
 export const createProduct = createAsyncThunk(
   'product/createProduct',
-  async (input) => {
+  async (input, { rejectWithValue }) => {
     const { token, userId } = input
     const config = {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.post(
-      `${baseUrl}/api/products`,
-      {
-        userid: userId,
-        name: 'Sample Name',
-        image: '/images/sample.jpg',
-        description: 'Sample description',
-        brand: 'Sample Brand',
-        category: 'Sample Category',
-        price: 0,
-        stock: 0,
-      },
-      config
-    )
-    return { ...res.data }
+    try {
+      const res = await axios.post(
+        `${baseUrl}/api/products`,
+        {
+          userid: userId,
+          name: 'Sample Name',
+          image: '/images/sample.jpg',
+          description: 'Sample description',
+          brand: 'Sample Brand',
+          category: 'Sample Category',
+          price: 0,
+          stock: 0,
+        },
+        config
+      )
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
 // api call
 export const fetchProduct = createAsyncThunk(
   'product/fetchProduct',
-  async (productId) => {
-    const res = await axios.get(`${baseUrl}/api/products/${productId}`)
-    // throw new Error('Error testing')
-    return { ...res.data }
+  async (productId, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${baseUrl}/api/products/${productId}`)
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
 // api call
 export const deleteProduct = createAsyncThunk(
   'product/deleteProduct',
-  async (input) => {
+  async (input, { rejectWithValue }) => {
     const { token, productId } = input
     const config = {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.delete(
-      `${baseUrl}/api/products/${productId}`,
-      config
-    )
-    return { ...res.data }
+    try {
+      const res = await axios.delete(
+        `${baseUrl}/api/products/${productId}`,
+        config
+      )
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
 // api call
 export const updateProduct = createAsyncThunk(
   'product/updateProduct',
-  async (input) => {
+  async (input, { rejectWithValue }) => {
     const {
       token,
       userId,
@@ -87,21 +98,25 @@ export const updateProduct = createAsyncThunk(
         Authorization: `Bearer ${token}`,
       },
     }
-    const res = await axios.put(
-      `${baseUrl}/api/products/${productId}`,
-      {
-        userid: userId,
-        name,
-        image,
-        description,
-        brand,
-        category,
-        price,
-        stock,
-      },
-      config
-    )
-    return { ...res.data }
+    try {
+      const res = await axios.put(
+        `${baseUrl}/api/products/${productId}`,
+        {
+          userid: userId,
+          name,
+          image,
+          description,
+          brand,
+          category,
+          price,
+          stock,
+        },
+        config
+      )
+      return { ...res.data }
+    } catch (err) {
+      return rejectWithValue(err.response.data)
+    }
   }
 )
 
@@ -127,8 +142,8 @@ const productSlice = createSlice({
         state.product = action.payload
       })
       .addCase(createProduct.rejected, (state, action) => {
-        state.status = 'creation error'
-        state.error = action.error.message
+        state.status = 'error creating product'
+        state.error = action.payload.message
       })
 
     builder
@@ -141,8 +156,8 @@ const productSlice = createSlice({
         state.product = action.payload
       })
       .addCase(fetchProduct.rejected, (state, action) => {
-        state.status = 'fetch error'
-        state.error = action.error.message
+        state.status = 'error fetching product'
+        state.error = action.payload.message
       })
 
     builder
@@ -155,7 +170,7 @@ const productSlice = createSlice({
         state.product = {}
       })
       .addCase(deleteProduct.rejected, (state, action) => {
-        state.status = 'deletion error'
+        state.status = 'error deleting product'
         state.error = action.payload.message
       })
 
@@ -169,7 +184,7 @@ const productSlice = createSlice({
         state.product = action.payload
       })
       .addCase(updateProduct.rejected, (state, action) => {
-        state.status = 'update Error'
+        state.status = 'error updating product'
         state.error = action.payload.message
       })
   },

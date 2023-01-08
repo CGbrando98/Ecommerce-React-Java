@@ -6,13 +6,23 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 import Message from '../components/Message'
 import Loader from '../components/Loader'
-import { selectUserAuth, updateUser } from '../redux/userAuthSlice'
 import {
+  logoutUser,
+  selectUserAuth,
+  selectUserAuthStatus,
+  selectUserAuthError,
+  updateUser,
+  newAccessToken,
+} from '../redux/userAuthSlice'
+import {
+  resetOrdersPlaced,
   getOrdersPlacedByUserId,
   selectOrdersPlaced,
   selectOrdersPlacedStatus,
   selectOrdersPlacedError,
 } from '../redux/ordersPlacedSlice'
+import { resetUsers } from '../redux/usersSlice'
+import tokenCheck from '../tokenExchange'
 
 const ProfileScreen = () => {
   const [username, setUsername] = useState('')
@@ -20,7 +30,7 @@ const ProfileScreen = () => {
   const [email, setEmail] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  // why do we have this
+  // message if passwords are not the same
   const [message, setMessage] = useState(null)
 
   const dispatch = useDispatch()
@@ -29,23 +39,31 @@ const ProfileScreen = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const user = useSelector(selectUserAuth)
+  const userStatus = useSelector(selectUserAuthStatus)
+  const userError = useSelector(selectUserAuthError)
   const userId = user.userInfo ? user.userInfo.id_user : null
   const token = user ? user.access_token : null
+
+  const refreshToken = user ? user.refresh_token : null
 
   const ordersPlaced = useSelector(selectOrdersPlaced)
   const ordersPlacedStatus = useSelector(selectOrdersPlacedStatus)
   const ordersPlacedError = useSelector(selectOrdersPlacedError)
 
   useEffect(() => {
-    // if user exists/is signed in, redirect them
+    // if user isn't signed in, redirect them
     if (!userId) {
       navigate('/login')
-    } else {
+    } else if (
+      ordersPlacedError === null ||
+      userStatus === 'new access token obtained'
+    ) {
       dispatch(getOrdersPlacedByUserId({ token, userId }))
       setUsername(user.userInfo.username)
       setEmail(user.userInfo.email)
     }
-  }, [navigate, user])
+    tokenCheck(dispatch, userId, ordersPlacedError, userError, refreshToken)
+  }, [dispatch, navigate, user, token, ordersPlacedError, userError])
 
   const submitHandler = (e) => {
     e.preventDefault()
@@ -61,8 +79,6 @@ const ProfileScreen = () => {
       <Col md={3}>
         <h2>User Profile</h2>
         {message && <Message variant='danger'>{message}</Message>}
-        {/* {userRegError && <Message variant='danger'>{userRegError}</Message>}
-        {userRegStatus === 'loading' && <Loader></Loader>} */}
         <Form onSubmit={submitHandler}>
           {/* username input */}
           <Form.Group
@@ -129,7 +145,10 @@ const ProfileScreen = () => {
         {ordersPlacedStatus === 'loading' ? (
           <Loader></Loader>
         ) : ordersPlacedError ? (
-          <Message variant='danger'>{ordersPlacedError}</Message>
+          <>
+            <Message variant='danger'>{ordersPlacedError}</Message>
+            {userError && <Message variant='danger'>{userError}</Message>}
+          </>
         ) : (
           <Table
             striped
@@ -152,11 +171,14 @@ const ProfileScreen = () => {
               {ordersPlaced.map((order) => (
                 <tr key={order.id_order}>
                   <td>{order.id_order}</td>
-                  <td>{order.orderCreatedDate}</td>
+                  <td>{order.orderCreatedDate.substring(0, 10)}</td>
                   <td>{order.totalprice}</td>
                   <td>
                     {order.ispaid ? (
-                      order.paidat
+                      <>
+                        {order.paidat.substring(0, 10)}{' '}
+                        {order.paidat.substring(11, 16)}
+                      </>
                     ) : (
                       <i
                         className='fas fa-times'
@@ -166,7 +188,10 @@ const ProfileScreen = () => {
                   </td>
                   <td>
                     {order.isdelivered ? (
-                      order.deliveredat
+                      <>
+                        {order.deliveredat.substring(0, 10)}{' '}
+                        {order.deliveredat.substring(11, 16)}
+                      </>
                     ) : (
                       <i
                         className='fas fa-times'

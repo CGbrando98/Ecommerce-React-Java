@@ -18,8 +18,6 @@ export const registerUser = createAsyncThunk(
         { username, email, password },
         config
       )
-      console.log(res.data)
-      // throw new Error('Error testing')
       return { ...res.data }
     } catch (err) {
       return rejectWithValue(err.response.data)

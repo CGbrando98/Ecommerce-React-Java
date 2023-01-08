@@ -13,33 +13,52 @@ import {
 } from '../redux/usersSlice'
 import {
   deleteUser,
-  selectUser,
-  selectUserStatus,
   selectUserError,
+  selectUserStatus,
 } from '../redux/userSlice'
-import { selectUserAuth } from '../redux/userAuthSlice'
+import { selectUserAuth, selectUserAuthError } from '../redux/userAuthSlice'
+import tokenCheck from '../tokenExchange'
 
 const UsersScreen = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
   const user = useSelector(selectUserAuth)
+  const userError = useSelector(selectUserAuthError)
+  const userId = user.userInfo ? user.userInfo.id_user : null
   const token = user.access_token
+  const refreshToken = user ? user.refresh_token : null
   const role = user.userInfo ? user.userInfo.role : null
+
   const users = useSelector(selectUsers)
   const usersStatus = useSelector(selectUsersStatus)
   const usersError = useSelector(selectUsersError)
 
-  const userStatus = useSelector(selectUserStatus)
-  const userError = useSelector(selectUserError)
+  const userFetchedError = useSelector(selectUserError)
+  const userFetchedStatus = useSelector(selectUserStatus)
+  console.log(usersError, userFetchedError)
 
   useEffect(() => {
-    if (user.userInfo && role === 'ROLE_ADMIN') {
-      dispatch(fetchUsers(token))
-    } else {
+    if (!userId) {
       navigate('/login')
+    } else if (
+      user.userInfo &&
+      role === 'ROLE_ADMIN' &&
+      !(usersError?.substring(0, 29) === 'Access: The Token has expired')
+    ) {
+      dispatch(fetchUsers(token))
     }
-  }, [dispatch, navigate, userStatus])
+
+    tokenCheck(dispatch, userId, usersError, userError, refreshToken)
+  }, [
+    dispatch,
+    navigate,
+    token,
+    usersError,
+    userError,
+    userFetchedError,
+    userFetchedStatus,
+  ])
 
   const deleteHandler = (userId) => {
     if (window.confirm('Are you sure?')) {

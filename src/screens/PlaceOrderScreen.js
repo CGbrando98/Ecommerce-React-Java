@@ -5,6 +5,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import Message from '../components/Message'
 import CheckoutSteps from '../components/CheckoutSteps'
 import {
+  selectOrderError,
   selectOrderStatus,
   selectOrder,
   selectCart,
@@ -13,18 +14,22 @@ import {
   CreateAndSendOrder,
   resetOrder,
 } from '../redux/orderSlice'
-import { selectUserAuth } from '../redux/userAuthSlice'
+import { selectUserAuth, selectUserAuthError } from '../redux/userAuthSlice'
+import tokenCheck from '../tokenExchange'
 
 const PlaceOrderScreen = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
   const user = useSelector(selectUserAuth)
+  const userError = useSelector(selectUserAuthError)
   const userId = user.userInfo ? user.userInfo.id_user : null
   const token = user.access_token
+  const refreshToken = user ? user.refresh_token : null
 
   const order = useSelector(selectOrder)
   const orderStatus = useSelector(selectOrderStatus)
+  const orderError = useSelector(selectOrderError)
   const orderId = order ? order.id_order : null
   const cart = useSelector(selectCart)
   const shippingAddress = useSelector(selectShippingDetails)
@@ -43,13 +48,25 @@ const PlaceOrderScreen = () => {
       navigate('/payment')
     }
     if (!userId) {
-      navigate(`/login?redirect=order/${orderId}`)
+      if (orderId === null) {
+        navigate(`/login`)
+      } else navigate(`/login?redirect=order/${orderId}`)
     }
     if (orderStatus === 'order sent successfully') {
       navigate(`/orders/${orderId}`)
       dispatch(resetOrder())
     }
-  }, [navigate, paymentMethod, user, orderStatus])
+    tokenCheck(dispatch, userId, orderError, userError, refreshToken)
+  }, [
+    dispatch,
+    navigate,
+    paymentMethod,
+    orderStatus,
+    user,
+    token,
+    orderError,
+    userError,
+  ])
 
   const placeOrderHandler = () => {
     dispatch(

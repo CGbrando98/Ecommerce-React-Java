@@ -5,20 +5,23 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import Message from '../components/Message'
 import Loader from '../components/Loader'
-import { selectUserAuth } from '../redux/userAuthSlice'
+import { selectUserAuth, selectUserAuthError } from '../redux/userAuthSlice'
 import {
   getOrdersPlaced,
   selectOrdersPlaced,
   selectOrdersPlacedStatus,
   selectOrdersPlacedError,
 } from '../redux/ordersPlacedSlice'
+import tokenCheck from '../tokenExchange'
 
 const OrdersScreen = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
   const user = useSelector(selectUserAuth)
+  const userError = useSelector(selectUserAuthError)
   const token = user.access_token
+  const refreshToken = user ? user.refresh_token : null
   const userId = user.userInfo ? user.userInfo.id_user : null
   const role = user.userInfo ? user.userInfo.role : null
 
@@ -27,12 +30,18 @@ const OrdersScreen = () => {
   const ordersPlacedError = useSelector(selectOrdersPlacedError)
 
   useEffect(() => {
-    if (user.userInfo && role === 'ROLE_ADMIN') {
-      dispatch(getOrdersPlaced(token))
-    } else {
+    if (!userId) {
       navigate('/login')
+    } else if (
+      user.userInfo &&
+      role === 'ROLE_ADMIN' &&
+      !(ordersPlacedError?.substring(0, 29) === 'Access: The Token has expired')
+    ) {
+      dispatch(getOrdersPlaced(token))
     }
-  }, [dispatch, navigate, user])
+
+    tokenCheck(dispatch, userId, ordersPlacedError, userError, refreshToken)
+  }, [dispatch, navigate, user, token, ordersPlacedError, userError])
 
   return (
     <>

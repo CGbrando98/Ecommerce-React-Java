@@ -12,7 +12,7 @@ import {
   selectProductStatus,
   selectProductError,
 } from '../redux/productSlice'
-import { selectUserAuth } from '../redux/userAuthSlice'
+import { selectUserAuth, selectUserAuthError } from '../redux/userAuthSlice'
 import {
   resetReview,
   createReview,
@@ -20,6 +20,7 @@ import {
   selectReviewError,
 } from '../redux/reviewSlice'
 import Meta from '../components/Meta'
+import tokenCheck from '../tokenExchange'
 
 const ProductScreen = () => {
   const [rating, setRating] = useState(0)
@@ -39,7 +40,9 @@ const ProductScreen = () => {
   const productError = useSelector(selectProductError)
 
   const user = useSelector(selectUserAuth)
+  const userError = useSelector(selectUserAuthError)
   const token = user.access_token
+  const refreshToken = user ? user.refresh_token : null
   const userId = user.userInfo ? user.userInfo.id_user : null
   const role = user.userInfo ? user.userInfo.role : null
 
@@ -55,7 +58,9 @@ const ProductScreen = () => {
       setComment('')
       dispatch(resetReview())
     }
-  }, [dispatch, id, reviewStatus])
+
+    tokenCheck(dispatch, userId, reviewError, userError, refreshToken)
+  }, [dispatch, id, reviewStatus, user, token, reviewError, userError])
 
   const addToCartHandler = () => {
     navigate(`/cart/${id}?qty=${qty}`)
@@ -178,6 +183,7 @@ const ProductScreen = () => {
           <Row>
             <Col md={6}>
               <h2>Reviews</h2>
+
               {reviews.length === 0 && <Message>No Reviews</Message>}
               <ListGroup variant='flush'>
                 {reviews.map((review) => (

@@ -10,6 +10,10 @@ import {
   selectUserAuthError,
 } from '../redux/userAuthSlice'
 import { resetUsers } from '../redux/usersSlice'
+import { fetchUserReset } from '../redux/userSlice'
+import { resetOrderPlaced } from '../redux/orderPlacedSlice'
+import { resetOrdersPlaced } from '../redux/ordersPlacedSlice'
+import { resetReview } from '../redux/reviewSlice'
 // we use a link container here since we need to wrap bootstrap components
 // use Link from react-router-dom for replacing a tags
 const Header = () => {
@@ -19,7 +23,11 @@ const Header = () => {
 
   const logoutHandler = () => {
     dispatch(logoutUser())
+    dispatch(resetOrdersPlaced())
+    dispatch(resetOrderPlaced())
     dispatch(resetUsers())
+    dispatch(fetchUserReset())
+    dispatch(resetReview())
   }
   return (
     <header>
